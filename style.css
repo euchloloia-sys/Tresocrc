@@ -1,39 +1,59 @@
 /* Trésorerie Repair Café — styles
-   Principes : texte en rem (respecte le zoom du système), cibles tactiles >= 48 px,
-   contrastes AA au minimum, jamais d'information portée par la seule couleur. */
+ *
+ * Principes :
+ *  - tailles en rem : tout suit la taille de texte choisie sur le téléphone ;
+ *  - aucune largeur fixe : les grilles passent seules sur une colonne quand la place manque
+ *    (petit écran ou texte agrandi), sans jamais faire défiler la page de côté ;
+ *  - cibles tactiles d'au moins 3 rem, contrastes AA au minimum ;
+ *  - jamais d'information portée par la seule couleur (signe, coche, étiquette en plus).
+ * Couleurs tirées du logo : bleu pour l'identité, orange en touche décorative.
+ */
 
 :root {
-  --fond: #f6f5f1;
+  --fond: #f3f5f9;
   --surface: #ffffff;
-  --texte: #1b1f1d;
-  --texte-doux: #4a534f;
-  --bord: #8a938f;
-  --accent: #1f5f4a;
+  --surface-2: #eaeef6;
+  --texte: #141a26;
+  --texte-doux: #4a5568;
+  --bord: #7b8798;
+  --bord-doux: #d5dbe6;
+  --accent: #14408f;
   --sur-accent: #ffffff;
-  --accent-doux: #dcebe5;
-  --recette: #17603f;
-  --depense: #9c2f22;
-  --alerte-fond: #fff3cd;
+  --accent-doux: #e3ebfa;
+  --touche: #f39a1d;
+  --recette: #146c43;
+  --recette-doux: #dff3e8;
+  --depense: #a8281c;
+  --depense-doux: #fbe6e2;
+  --alerte-fond: #fff4d6;
   --alerte-texte: #4d3b00;
   --focus: #0b57d0;
-  --rayon: 12px;
+  --ombre: 0 1px 2px rgb(20 26 38 / .06), 0 4px 14px rgb(20 26 38 / .07);
+  --rayon: 14px;
+  --rayon-petit: 10px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --fond: #121615;
-    --surface: #1c2220;
-    --texte: #eef2f0;
-    --texte-doux: #b9c4bf;
-    --bord: #77827d;
-    --accent: #7fd1b3;
-    --sur-accent: #0c2019;
-    --accent-doux: #24382f;
-    --recette: #8fe0b4;
-    --depense: #ffb0a3;
+    --fond: #0f131b;
+    --surface: #1a2130;
+    --surface-2: #232c3f;
+    --texte: #eef2f8;
+    --texte-doux: #b5c0d2;
+    --bord: #7a879c;
+    --bord-doux: #333e53;
+    --accent: #9dbcff;
+    --sur-accent: #0b1a3a;
+    --accent-doux: #22304d;
+    --touche: #f7b24f;
+    --recette: #86dfae;
+    --recette-doux: #173a29;
+    --depense: #ffb3a6;
+    --depense-doux: #46211c;
     --alerte-fond: #3d3210;
     --alerte-texte: #ffe9a6;
-    --focus: #9ec2ff;
+    --focus: #b9d0ff;
+    --ombre: 0 1px 2px rgb(0 0 0 / .4);
   }
 }
 
@@ -51,18 +71,20 @@ body {
   background: var(--fond);
   color: var(--texte);
   padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  /* Un mot trop long se coupe plutôt que d'élargir la page. */
+  overflow-wrap: break-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
 }
 
-h1, h2, h3 { line-height: 1.25; margin: 0; }
-h1 { font-size: 1.5rem; }
-h2 { font-size: 1.2rem; margin-bottom: .5rem; }
-h3 { font-size: 1rem; margin: 1rem 0 .25rem; color: var(--texte-doux); }
+h1, h2, h3, h4 { line-height: 1.25; margin: 0; }
+h1 { font-size: 1.45rem; }
+h2 { font-size: 1.15rem; margin-bottom: .5rem; }
+h3 { font-size: 1rem; margin: 1rem 0 .35rem; color: var(--texte-doux); }
 p { margin: .25rem 0 .75rem; }
+img { max-width: 100%; height: auto; }
 
-:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-}
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 h1:focus { outline: none; }
 
 .evitement {
@@ -77,92 +99,166 @@ h1:focus { outline: none; }
   clip-path: inset(50%); white-space: nowrap;
 }
 
+/* ---- En-tête : identité de l'association, puis titre de l'écran ---- */
 .entete {
-  background: var(--accent);
-  color: var(--sur-accent);
-  padding: calc(.75rem + env(safe-area-inset-top)) 1rem .75rem;
-  position: sticky; top: 0; z-index: 5;
+  background: var(--surface);
+  border-bottom: 1px solid var(--bord-doux);
+  box-shadow: 0 4px 0 -1px var(--touche);
+  padding: calc(.6rem + env(safe-area-inset-top)) 1rem .7rem;
+  margin-bottom: 4px;
 }
+.entete > * { max-width: 38rem; margin-left: auto; margin-right: auto; }
+.marque { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; min-width: 0; }
+.marque img {
+  flex: 0 0 auto; width: 3rem; border-radius: 8px; background: #f3f3f3;
+}
+/* Le nom ne se coupe jamais au milieu d'un mot : s'il manque de place, il passe sous le logo. */
+.marque > div { flex: 1 1 9rem; min-width: 0; overflow-wrap: normal; -webkit-hyphens: manual; hyphens: manual; }
+.marque p { margin: 0; line-height: 1.2; }
+.marque-nom { font-weight: 800; color: var(--accent); font-size: 1.05rem; }
+.marque-role { color: var(--texte-doux); font-size: .9rem; }
+.entete h1 { margin-top: .5rem; }
+/* Écran d'accueil : le logo prend sa place. */
+body[data-vue="saisie"] .marque img { width: min(5.5rem, 34vw); }
+body[data-vue="saisie"] .marque-nom { font-size: 1.4rem; }
+body[data-vue="saisie"] .marque-role { font-size: 1rem; }
+/* Sur l'accueil, le titre « Saisie » reste lu par les lecteurs d'écran mais ne prend pas de place :
+   le formulaire doit rester le plus haut possible. */
+body[data-vue="saisie"] .entete h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; margin: 0; }
 
 main { max-width: 40rem; margin: 0 auto; padding: 1rem; }
 
 /* ---- Formulaires ---- */
 fieldset { border: 0; padding: 0; margin: 0 0 1rem; min-width: 0; }
-legend, label { font-weight: 600; display: block; margin-bottom: .25rem; padding: 0; }
+legend, label { font-weight: 600; display: block; margin-bottom: .3rem; padding: 0; max-width: 100%; }
 .facultatif { font-weight: 400; color: var(--texte-doux); }
 .champ { margin-bottom: 1rem; min-width: 0; }
-.ligne-champs { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+
+/* Deux colonnes quand il y a la place, une seule sinon. Le seuil est en rem : il suit la taille du texte. */
+.ligne-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)); gap: 0 .75rem; }
+.ligne-champs > * { min-width: 0; }
 
 input[type="text"], input[type="date"], select {
-  width: 100%;
+  display: block;
+  width: 100%; max-width: 100%; min-width: 0;
   min-height: 3rem;
   font: inherit;
   color: var(--texte);
-  background: var(--surface);
+  background-color: var(--surface);
   border: 2px solid var(--bord);
-  border-radius: var(--rayon);
+  border-radius: var(--rayon-petit);
   padding: .5rem .75rem;
 }
-input.montant { font-size: 2rem; font-weight: 700; text-align: right; min-height: 4rem; }
-input[aria-invalid="true"] { border-color: var(--depense); border-width: 3px; }
+
+/* Champs de date sur iPhone : Safari leur impose une largeur minimale et ajoute les marges
+   intérieures à la largeur, ce qui les fait déborder du cadre ou se chevaucher. Retirer
+   l'apparence native rétablit le calcul normal ; le calendrier du téléphone s'ouvre toujours. */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  text-align: left;
+  line-height: 1.5;
+}
+input[type="date"]::-webkit-date-and-time-value { margin: 0; text-align: left; min-height: 1.5em; }
+input::-webkit-datetime-edit, input::-webkit-datetime-edit-fields-wrapper { padding: 0; }
+
+/* Les listes déroulantes gardent une flèche visible, redessinée pour être identique partout. */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 2.25rem;
+  text-overflow: ellipsis;
+  background-image: linear-gradient(45deg, transparent 50%, var(--texte-doux) 50%), linear-gradient(135deg, var(--texte-doux) 50%, transparent 50%);
+  background-position: calc(100% - 1.15rem) 50%, calc(100% - .8rem) 50%;
+  background-size: .35rem .35rem, .35rem .35rem;
+  background-repeat: no-repeat;
+}
+
+input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--depense); border-width: 3px; }
+
+/* Montant : gros chiffres, symbole euro à droite. */
+.champ-montant { position: relative; }
+.champ-montant input {
+  font-size: 2rem; font-weight: 700; text-align: right; min-height: 4rem;
+  padding-right: 2.6rem; font-variant-numeric: tabular-nums;
+}
+.champ-montant > span {
+  position: absolute; right: .9rem; top: 50%; transform: translateY(-50%);
+  font-size: 1.5rem; font-weight: 700; color: var(--texte-doux); pointer-events: none;
+}
+.ligne-ticket .champ-montant input { font-size: 1.5rem; min-height: 3.25rem; }
+.ligne-ticket .champ-montant > span { font-size: 1.2rem; }
 
 .aide { color: var(--texte-doux); font-size: .95rem; margin: .25rem 0 0; }
 .erreur { color: var(--depense); font-weight: 600; margin: .25rem 0 0; }
 .erreur::before { content: "⚠ "; }
 
-/* Sélecteur Dépense / Recette */
-.segment { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+/* Choix par pastilles (type d'écriture, catégories, sous-catégories) */
+.segment, .pastilles { display: grid; gap: .5rem; }
+.segment { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pastilles { grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr)); }
 .segment legend { grid-column: 1 / -1; }
-.segment label { margin: 0; position: relative; }
+.segment label, .pastilles label { margin: 0; position: relative; min-width: 0; }
 .segment input, .pastilles input {
   position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer;
 }
-.segment span, .pastilles span {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 3rem; padding: .5rem .75rem; text-align: center;
-  border: 2px solid var(--bord); border-radius: var(--rayon);
-  background: var(--surface); font-weight: 600;
+.segment label > span, .pastilles label > span {
+  display: flex; align-items: center; justify-content: center; gap: .4rem;
+  min-height: 3.25rem; height: 100%; padding: .5rem .55rem; text-align: center;
+  border: 2px solid var(--bord-doux); border-radius: var(--rayon);
+  background: var(--surface); font-weight: 600; box-shadow: var(--ombre);
+  overflow-wrap: anywhere; min-width: 0;
 }
+.pastilles label > span { justify-content: flex-start; text-align: left; }
+.icone { flex: 0 0 auto; font-size: 1.25rem; line-height: 1; }
 .segment input:checked + span, .pastilles input:checked + span {
   background: var(--accent); color: var(--sur-accent); border-color: var(--accent);
 }
-.segment input:checked + span::before, .pastilles input:checked + span::before { content: "✓ "; }
+.segment input:checked + span::before, .pastilles input:checked + span::before { content: "✓"; font-weight: 800; }
+/* Sur les pastilles, la coche se loge dans le coin : elle ne prend pas la place du nom. */
+.pastilles input:checked + span::before { position: absolute; top: .1rem; right: .45rem; font-size: .9rem; }
 .segment input:focus-visible + span, .pastilles input:focus-visible + span {
   outline: 3px solid var(--focus); outline-offset: 2px;
 }
-
-.pastilles { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
-.pastilles label { margin: 0; position: relative; }
+/* Le type choisi teinte le bouton : rouge brique pour une dépense, vert pour une recette (en plus de la coche). */
+.segment .sens-depense input:checked + span { background: var(--depense); border-color: var(--depense); color: var(--surface); }
+.segment .sens-recette input:checked + span { background: var(--recette); border-color: var(--recette); color: var(--surface); }
+#choix-sous-categorie label > span { min-height: 3rem; background: var(--surface-2); box-shadow: none; }
+#choix-sous-categorie input:checked + span { background: var(--accent); }
 
 .details {
-  border: 2px solid var(--bord); border-radius: var(--rayon);
-  padding: 0 .75rem; margin-bottom: 1rem; background: var(--surface);
+  border: 1px solid var(--bord-doux); border-radius: var(--rayon);
+  padding: 0 .75rem; margin-bottom: 1rem; background: var(--surface); box-shadow: var(--ombre);
 }
-.details summary { min-height: 3rem; display: flex; align-items: center; font-weight: 600; cursor: pointer; }
-.details[open] summary { margin-bottom: .5rem; }
+.details summary { min-height: 3rem; display: flex; align-items: center; gap: .4rem; font-weight: 600; cursor: pointer; }
+.details[open] > summary { margin-bottom: .5rem; }
 
 /* ---- Boutons ---- */
 .bouton {
   display: inline-flex; align-items: center; justify-content: center;
-  min-height: 3rem; padding: .5rem 1rem;
+  min-height: 3rem; padding: .5rem 1rem; max-width: 100%;
   font: inherit; font-weight: 600; text-align: center;
   color: var(--texte); background: var(--surface);
   border: 2px solid var(--bord); border-radius: var(--rayon);
   cursor: pointer; margin: 0;
+  -webkit-hyphens: manual; hyphens: manual;
 }
-.bouton.primaire { background: var(--accent); color: var(--sur-accent); border-color: var(--accent); }
+.bouton.primaire { background: var(--accent); color: var(--sur-accent); border-color: var(--accent); box-shadow: var(--ombre); }
 .bouton.danger { color: var(--depense); border-color: var(--depense); }
 .bouton.large { width: 100%; min-height: 3.5rem; font-size: 1.15rem; }
-.bouton.petit { min-height: 3rem; padding: .25rem .75rem; }
+.bouton.petit { padding: .25rem .75rem; }
+.bouton.discret { border-style: dashed; color: var(--accent); border-color: var(--accent); }
 /* Le champ fichier est masqué : on reporte l'anneau de focus sur son étiquette-bouton. */
 label.bouton:has(+ input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
 .actions .bouton { flex: 1 1 10rem; }
+.espace-haut { margin-top: .75rem; }
 
-/* ---- Blocs et listes ---- */
+/* ---- Blocs ---- */
 .bloc {
   background: var(--surface); border-radius: var(--rayon);
-  padding: 1rem; margin-top: 1.25rem; border: 1px solid var(--bord);
+  padding: 1rem; margin-top: 1.25rem; border: 1px solid var(--bord-doux); box-shadow: var(--ombre);
 }
 .alerte {
   background: var(--alerte-fond); color: var(--alerte-texte);
@@ -170,21 +266,50 @@ label.bouton:has(+ input:focus-visible) { outline: 3px solid var(--focus); outli
   padding: .75rem 1rem; margin-bottom: 1rem;
 }
 
+/* ---- Synthèse en tête de l'accueil : un seul chiffre mis en avant ---- */
+.synthese {
+  display: block; width: 100%; text-align: left; font: inherit; color: var(--sur-accent);
+  background: var(--accent); border: 0; border-radius: var(--rayon);
+  padding: .9rem 1rem; margin-bottom: 1.25rem; cursor: pointer; box-shadow: var(--ombre);
+}
+.synthese-periode { display: block; font-size: .9rem; opacity: .9; }
+.synthese-resultat { display: block; font-size: 2rem; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.synthese-detail { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin-top: .35rem; font-variant-numeric: tabular-nums; }
+.synthese-detail span { white-space: nowrap; }
+.synthese-lien { display: block; margin-top: .4rem; font-size: .9rem; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---- Listes d'écritures ---- */
 ul.ecritures, ul.liste-simple { list-style: none; margin: 0; padding: 0; }
 
-.ecritures li + li { border-top: 1px solid var(--bord); }
+.ecritures li + li { border-top: 1px solid var(--bord-doux); }
 .ecritures button {
-  width: 100%; min-height: 3.5rem; padding: .5rem .25rem;
-  display: grid; grid-template-columns: 1fr auto; gap: 0 .75rem;
+  width: 100%; min-height: 3.75rem; padding: .55rem .25rem;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 .65rem; align-items: center;
   font: inherit; color: inherit; text-align: left;
   background: none; border: 0; cursor: pointer;
 }
-.ecritures .ligne1 { font-weight: 600; overflow-wrap: anywhere; }
-.ecritures .ligne2 { grid-column: 1; color: var(--texte-doux); font-size: .95rem; overflow-wrap: anywhere; }
-.ecritures .somme { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pastille-icone {
+  grid-row: 1 / span 2; width: 2.5rem; height: 2.5rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-doux); color: var(--accent); font-size: 1.2rem; font-weight: 800; line-height: 1;
+}
+.pastille-icone.recette { background: var(--recette-doux); color: var(--recette); }
+.pastille-icone.depense { background: var(--depense-doux); color: var(--depense); }
+.ecritures .ligne1 { grid-column: 2; font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.ecritures .ligne2 { grid-column: 2; color: var(--texte-doux); font-size: .92rem; overflow-wrap: anywhere; min-width: 0; }
+.ecritures .somme { grid-row: 1 / span 2; grid-column: 3; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .somme.recette { color: var(--recette); }
 .somme.depense { color: var(--depense); }
 .ecritures .annulee .ligne1, .ecritures .annulee .somme { text-decoration: line-through; }
+.ecritures .annulee .pastille-icone { opacity: .5; }
+/* En-tête de mois dans la liste des écritures */
+.ecritures li.mois {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0 1rem;
+  padding: 1rem .25rem .35rem; border-top: 0;
+  font-weight: 800; color: var(--accent); text-transform: capitalize;
+}
+.ecritures li.mois span:last-child { font-weight: 600; color: var(--texte-doux); text-transform: none; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ecritures li.mois + li { border-top: 2px solid var(--touche); }
 .etiquette {
   display: inline-block; font-size: .85rem; font-weight: 700;
   border: 2px solid currentColor; border-radius: 6px; padding: 0 .35rem; margin-left: .35rem;
@@ -194,103 +319,112 @@ ul.ecritures, ul.liste-simple { list-style: none; margin: 0; padding: 0; }
 
 .liste-simple li {
   display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
-  padding: .5rem 0; border-top: 1px solid var(--bord);
+  padding: .5rem 0; border-top: 1px solid var(--bord-doux);
 }
 .liste-simple li:first-child { border-top: 0; }
-.liste-simple .grandit { flex: 1 1 10rem; min-width: 0; }
-.liste-simple input[type="text"] { min-height: 3rem; }
+.liste-simple .grandit { flex: 1 1 9rem; min-width: 0; width: auto; }
 
 /* ---- État par période ---- */
 .totaux { display: grid; gap: .5rem; margin: 1rem 0; }
 .total {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
-  background: var(--surface); border: 1px solid var(--bord);
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0 1rem;
+  background: var(--surface); border: 1px solid var(--bord-doux); box-shadow: var(--ombre);
   border-radius: var(--rayon); padding: .75rem 1rem;
 }
-.total strong { font-size: 1.3rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.total.resultat { border-width: 3px; }
+.total strong { font-size: 1.3rem; font-variant-numeric: tabular-nums; white-space: nowrap; margin-left: auto; }
+.total.resultat { background: var(--accent); color: var(--sur-accent); border-color: var(--accent); }
+.total.resultat strong { font-size: 1.6rem; }
 
-table { width: 100%; border-collapse: collapse; margin: .25rem 0 1rem; }
+table { width: 100%; border-collapse: collapse; margin: .25rem 0 1rem; table-layout: auto; }
 caption { text-align: left; font-weight: 700; font-size: 1.1rem; padding: .5rem 0; }
-th, td { padding: .5rem .25rem; border-bottom: 1px solid var(--bord); text-align: left; vertical-align: top; }
-td.nombre, th.nombre { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+th, td { padding: .5rem .25rem; border-bottom: 1px solid var(--bord-doux); text-align: left; vertical-align: top; }
+th { overflow-wrap: anywhere; }
+td.nombre, th.nombre { text-align: right; font-variant-numeric: tabular-nums; }
+td.nombre { white-space: nowrap; }
+/* Un montant ne se coupe pas (espaces insécables), mais un en-tête de colonne peut passer à la ligne. */
+th.nombre { overflow-wrap: anywhere; }
 tfoot td, tfoot th { font-weight: 700; border-bottom: 0; }
-.barre { height: .5rem; background: var(--accent-doux); border-radius: 4px; margin-top: .25rem; }
+.barre { height: .5rem; background: var(--accent-doux); border-radius: 4px; margin-top: .3rem; }
 .barre > span { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+th.sous { font-weight: 400; padding-left: 1.25rem; }
+th.sous::before { content: "› "; color: var(--texte-doux); }
+tr.sous td { color: var(--texte-doux); }
+/* Texte très agrandi ou écran très étroit : la colonne « Part » s'efface, les montants restent. */
+@media (max-width: 24rem) {
+  #rapport-etat th:nth-child(3), #rapport-etat td:nth-child(3) { display: none; }
+  #rapport-etat table.modes th:nth-child(3), #rapport-etat table.modes td:nth-child(3) { display: table-cell; }
+}
+
+/* ---- Réglages : catégories ---- */
+.details.cat { margin-bottom: .5rem; padding-bottom: .25rem; }
+.details.cat summary { flex-wrap: wrap; padding: .35rem 0; }
+.details.cat h4 { font-size: 1rem; margin: .75rem 0 0; }
+.details.cat .ajout { display: flex; flex-wrap: wrap; gap: .5rem; align-items: end; margin: .5rem 0 .75rem; }
+.details.cat .ajout .champ { flex: 1 1 9rem; margin: 0; }
+.details.cat .champ.icone-choix { margin: .5rem 0 0; }
+
+/* ---- Ticket à plusieurs achats ---- */
+.ligne-ticket {
+  border: 1px solid var(--bord-doux); border-radius: var(--rayon); box-shadow: var(--ombre);
+  padding: .5rem .75rem .75rem; margin-bottom: .75rem; background: var(--surface);
+}
+.ligne-ticket legend { padding: 0 .35rem; color: var(--accent); }
+#dlg-ticket ul { margin: 0; padding-left: 1.25rem; }
 
 /* ---- Navigation basse ---- */
 .onglets {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  background: var(--surface); border-top: 2px solid var(--bord);
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: var(--surface); border-top: 1px solid var(--bord-doux);
+  box-shadow: 0 -2px 10px rgb(20 26 38 / .08);
   padding-bottom: env(safe-area-inset-bottom);
 }
 .onglets button {
-  min-height: 4rem; font: inherit; font-size: .9rem; font-weight: 600;
+  min-height: 4rem; min-width: 0; font: inherit; font-size: min(.85rem, 4.3vw); font-weight: 600;
   color: var(--texte-doux); background: none; border: 0;
   border-top: 4px solid transparent;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  cursor: pointer; padding: .25rem;
+  cursor: pointer; padding: .25rem .1rem; overflow-wrap: normal; white-space: nowrap;
 }
 .onglets button span { font-size: 1.3rem; line-height: 1.2; }
-.onglets button[aria-current="page"] { color: var(--accent); border-top-color: var(--accent); }
+.onglets button[aria-current="page"] { color: var(--accent); border-top-color: var(--touche); font-weight: 800; }
 .onglets button:focus-visible { outline-offset: -4px; }
 
-/* ---- Message de confirmation ---- */
+/* ---- Message de confirmation, avec une action possible ---- */
 .annonce {
   position: fixed; left: 1rem; right: 1rem;
   bottom: calc(5rem + env(safe-area-inset-bottom)); z-index: 15;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .5rem 1rem;
   background: var(--texte); color: var(--fond);
-  border-radius: var(--rayon); padding: .75rem 1rem;
+  border-radius: var(--rayon); padding: .75rem 1rem; box-shadow: var(--ombre);
   font-weight: 600; text-align: center;
 }
-.annonce:empty { display: none; }
+.annonce p { margin: 0; flex: 1 1 12rem; -webkit-hyphens: manual; hyphens: manual; }
+.annonce .bouton { background: transparent; color: inherit; border-color: currentColor; }
 
-/* ---- Fenêtre de correction ---- */
+/* ---- Fenêtres ---- */
 dialog {
   width: min(100% - 1.5rem, 36rem); max-height: calc(100dvh - 2rem);
-  border: 2px solid var(--bord); border-radius: var(--rayon);
+  border: 0; border-radius: var(--rayon); box-shadow: 0 10px 40px rgb(0 0 0 / .35);
   background: var(--fond); color: var(--texte); padding: 1rem;
 }
-dialog::backdrop { background: rgb(0 0 0 / .6); }
+dialog::backdrop { background: rgb(10 16 30 / .6); }
 
 .version { margin-top: 1.5rem; text-align: center; }
-.espace-haut { margin-top: .75rem; }
-
-/* ---- Sous-catégories ---- */
-th.sous { font-weight: 400; padding-left: 1.25rem; }
-th.sous::before { content: "› "; color: var(--texte-doux); }
-tr.sous td { color: var(--texte-doux); }
-.details.cat { margin-bottom: .5rem; padding-bottom: .25rem; }
-.details.cat summary { gap: .35rem; flex-wrap: wrap; }
-.details.cat h4 { font-size: 1rem; margin: .75rem 0 0; }
-.details.cat .ajout { display: flex; flex-wrap: wrap; gap: .5rem; align-items: end; margin: .5rem 0 .75rem; }
-.details.cat .ajout .champ { flex: 1 1 10rem; margin: 0; }
-
-/* ---- Ticket à plusieurs achats ---- */
-.ligne-ticket {
-  border: 2px solid var(--bord); border-radius: var(--rayon);
-  padding: .5rem .75rem .75rem; margin-bottom: .75rem; background: var(--surface);
-}
-.ligne-ticket legend { padding: 0 .35rem; }
-.ligne-ticket input.montant { font-size: 1.5rem; min-height: 3.25rem; }
-select[aria-invalid="true"] { border-color: var(--depense); border-width: 3px; }
-#dlg-ticket ul { margin: 0; padding-left: 1.25rem; }
-
-@media (max-width: 22rem) {
-  .ligne-champs, .pastilles { grid-template-columns: 1fr; }
-}
 
 @media (prefers-reduced-motion: no-preference) {
-  .bouton, .segment span, .pastilles span { transition: background-color .15s, color .15s; }
+  .bouton, .segment label > span, .pastilles label > span { transition: background-color .15s, color .15s, border-color .15s; }
 }
 
 /* ---- Impression de l'état (ou « Enregistrer en PDF ») ---- */
 @media print {
-  :root { --fond: #fff; --surface: #fff; --texte: #000; --texte-doux: #333; --bord: #666; --accent: #000; --accent-doux: #ddd; --recette: #000; --depense: #000; }
+  :root { --fond: #fff; --surface: #fff; --surface-2: #fff; --texte: #000; --texte-doux: #333; --bord: #666; --bord-doux: #999; --accent: #000; --sur-accent: #fff; --accent-doux: #ddd; --recette: #000; --depense: #000; --ombre: none; }
   body { padding: 0; }
   .onglets, .annonce, .non-imprime, .evitement { display: none !important; }
-  .entete { position: static; background: none; color: #000; padding: 0 0 .5rem; }
+  .entete { box-shadow: none; padding: 0 0 .5rem; }
+  body .marque img { width: 4.5rem !important; }
   main { max-width: none; padding: 0; }
+  .total.resultat { background: #fff; color: #000; border: 3px solid #000; }
   .barre > span { background: #000; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  #rapport-etat th:nth-child(3), #rapport-etat td:nth-child(3) { display: table-cell; }
 }

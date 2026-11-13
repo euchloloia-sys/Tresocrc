@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Trésorerie Repair Café</title>
 <meta name="description" content="Suivi de trésorerie du Carembault Repair Café">
-<meta name="theme-color" content="#1f5f4a">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a2130" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Trésorerie">
@@ -14,10 +15,18 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-vue="saisie">
 <a class="evitement" href="#contenu">Aller au contenu</a>
 
 <header class="entete">
+  <div class="marque">
+    <!-- Le nom est écrit juste à côté : l'image est décorative pour un lecteur d'écran. -->
+    <img src="icons/logo.png" alt="" width="354" height="320">
+    <div>
+      <p class="marque-nom">Carembault Repair Café</p>
+      <p class="marque-role">Trésorerie</p>
+    </div>
+  </div>
   <h1 id="titre-vue" tabindex="-1">Saisie</h1>
 </header>
 
@@ -25,6 +34,13 @@
 
   <!-- ===== SAISIE ===== -->
   <section id="vue-saisie" class="vue" aria-labelledby="titre-vue">
+    <button type="button" id="synthese" class="synthese">
+      <span class="synthese-periode" id="synthese-periode"></span>
+      <span class="synthese-resultat" id="synthese-resultat"></span>
+      <span class="synthese-detail"><span id="synthese-recettes"></span><span id="synthese-depenses"></span></span>
+      <span class="synthese-lien">Voir l'état détaillé</span>
+    </button>
+
     <div id="alerte-sauvegarde" class="alerte" hidden>
       <p id="texte-alerte-sauvegarde"></p>
       <button type="button" id="btn-sauver-alerte" class="bouton">Sauvegarder maintenant</button>
@@ -33,14 +49,17 @@
     <form id="form-saisie" novalidate>
       <fieldset class="segment">
         <legend>Type d'écriture</legend>
-        <label><input type="radio" name="sens" value="depense" checked><span>Dépense</span></label>
-        <label><input type="radio" name="sens" value="recette"><span>Recette</span></label>
+        <label class="sens-depense"><input type="radio" name="sens" value="depense" checked><span>Dépense</span></label>
+        <label class="sens-recette"><input type="radio" name="sens" value="recette"><span>Recette</span></label>
       </fieldset>
 
       <div class="champ">
         <label for="montant">Montant en euros</label>
-        <input id="montant" class="montant" type="text" inputmode="decimal" autocomplete="off"
-               placeholder="0,00" aria-describedby="err-montant" required>
+        <div class="champ-montant">
+          <input id="montant" type="text" inputmode="decimal" autocomplete="off"
+                 placeholder="0,00" aria-describedby="err-montant" required>
+          <span aria-hidden="true">€</span>
+        </div>
         <p id="err-montant" class="erreur" hidden></p>
       </div>
 
@@ -78,8 +97,8 @@
         </div>
       </details>
 
-      <button type="submit" class="bouton primaire large">Enregistrer</button>
-      <button type="button" id="btn-ticket" class="bouton large espace-haut">Ticket à plusieurs achats</button>
+      <button type="submit" id="btn-enregistrer" class="bouton primaire large">Enregistrer la dépense</button>
+      <button type="button" id="btn-ticket" class="bouton discret large espace-haut">Ticket à plusieurs achats</button>
     </form>
 
     <section aria-labelledby="h-dernieres" class="bloc">
@@ -196,7 +215,10 @@
   <button type="button" data-vue="reglages"><span aria-hidden="true">⚙</span>Réglages</button>
 </nav>
 
-<div id="annonce" class="annonce" role="status" aria-live="polite"></div>
+<div id="bandeau" class="annonce" hidden>
+  <p id="annonce" role="status" aria-live="polite"></p>
+  <button type="button" id="annonce-action" class="bouton petit" hidden></button>
+</div>
 
 <!-- ===== Fenêtre de correction ===== -->
 <dialog id="dlg-ecriture" aria-labelledby="dlg-titre">
@@ -209,12 +231,15 @@
     </div>
     <fieldset class="segment">
       <legend>Type d'écriture</legend>
-      <label><input type="radio" name="e-sens" value="depense"><span>Dépense</span></label>
-      <label><input type="radio" name="e-sens" value="recette"><span>Recette</span></label>
+      <label class="sens-depense"><input type="radio" name="e-sens" value="depense"><span>Dépense</span></label>
+      <label class="sens-recette"><input type="radio" name="e-sens" value="recette"><span>Recette</span></label>
     </fieldset>
     <div class="champ">
       <label for="e-montant">Montant en euros</label>
-      <input id="e-montant" class="montant" type="text" inputmode="decimal" autocomplete="off" aria-describedby="e-err-montant" required>
+      <div class="champ-montant">
+        <input id="e-montant" type="text" inputmode="decimal" autocomplete="off" aria-describedby="e-err-montant" required>
+        <span aria-hidden="true">€</span>
+      </div>
       <p id="e-err-montant" class="erreur" hidden></p>
     </div>
     <div class="champ">
@@ -261,7 +286,10 @@
     <p class="aide">Saisissez le total du ticket, puis un achat par type de dépense. Chaque achat devient une écriture.</p>
     <div class="champ">
       <label for="tk-total">Total du ticket en euros</label>
-      <input id="tk-total" class="montant" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-describedby="tk-err-total" required>
+      <div class="champ-montant">
+        <input id="tk-total" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-describedby="tk-err-total" required>
+        <span aria-hidden="true">€</span>
+      </div>
       <p id="tk-err-total" class="erreur" hidden></p>
     </div>
     <div class="ligne-champs">

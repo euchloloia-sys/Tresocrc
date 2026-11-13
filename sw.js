@@ -7,10 +7,10 @@
  *
  * IMPORTANT : changer CACHE à chaque mise en ligne (même numéro que VERSION dans app.js),
  * sinon les téléphones ne voient pas la nouvelle version. `node tests.js` le vérifie. */
-const CACHE = 'tresorerie-rc-1.1.0';
+const CACHE = 'tresorerie-rc-1.2.0';
 const FICHIERS = [
   './', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
-  'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
+  'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/logo.png',
 ];
 
 self.addEventListener('install', (e) => {

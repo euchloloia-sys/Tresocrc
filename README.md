@@ -2,9 +2,11 @@
 
 Application de suivi de trésorerie du Carembault Repair Café : saisie des dépenses et des recettes, état par période, sauvegarde. Elle s'installe sur l'écran d'accueil du téléphone et fonctionne hors-ligne.
 
-**Version 1.1.0 — lot 1** : les données restent sur l'appareil. La synchronisation vers un dépôt privé et le mode lecture seule du président arrivent au lot 2.
+**Version 1.2.0 — lot 1** : les données restent sur l'appareil. La synchronisation vers un dépôt privé et le mode lecture seule du président arrivent au lot 2.
 
-Nouveautés de la 1.1 : sous-catégories, ticket à plusieurs achats, gestion complète des catégories. Les données saisies en 1.0 sont conservées.
+Nouveautés de la 1.2 : identité du Carembault Repair Café (logo, couleurs), synthèse de l'exercice sur l'accueil, icônes de catégories, écritures regroupées par mois, bouton « Corriger » après chaque saisie, mise en page revue pour les petits écrans et le texte agrandi.
+
+Nouveautés de la 1.1 : sous-catégories, ticket à plusieurs achats, gestion complète des catégories. Les données des versions précédentes sont conservées.
 
 ## Mise en ligne (GitHub Pages)
 
@@ -49,7 +51,7 @@ L'export CSV (séparateur `;`, virgule décimale) s'ouvre directement dans Libre
 | Fichier | Rôle |
 |---|---|
 | `index.html` | Structure des quatre écrans et de la fenêtre de correction |
-| `style.css` | Mise en forme, thème clair et sombre, impression |
+| `style.css` | Mise en forme, thème clair et sombre, impression. Aucune largeur fixe : tout est en `rem` et les grilles passent sur une colonne quand la place manque |
 | `app.js` | Fonctions de calcul (première partie) puis interface |
 | `sw.js` | Fonctionnement hors-ligne |
 | `manifest.webmanifest`, `icons/` | Installation sur l'écran d'accueil |

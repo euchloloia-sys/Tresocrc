@@ -14,7 +14,7 @@
  */
 'use strict';
 
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const FORMAT = 'tresorerie-rc';
 const SCHEMA = 2; // 1 : catégories simples ; 2 : sous-catégories et tickets ventilés
 const JOURS_ALERTE_SAUVEGARDE = 30;
@@ -47,6 +47,35 @@ const SOUS_CATEGORIES_DEFAUT = [
   ['d-communication', ['impressions', 'Impressions'], ['signaletique', 'Signalétique'], ['abonnements', 'Abonnements en ligne'], ['autre', 'Autre']],
   ['d-divers', ['bureau', 'Fournitures de bureau'], ['postal', 'Frais postaux'], ['autre', 'Autre']],
 ].flatMap(([parent, ...liste]) => liste.map(([cle, nom]) => ({ id: `${parent}-${cle}`, nom, sens: 'depense', parent })));
+
+/* Icônes des catégories : un repère visuel en plus du nom, jamais à sa place.
+ * Une catégorie peut porter son propre champ `icone` (choisi dans les réglages) ; '' = aucune. */
+const ICONES_DEFAUT = {
+  'd-outillage': '🔧', 'd-pieces': '🔩', 'd-convivialite': '☕', 'd-communication': '📣', 'd-assurance': '🛡️', 'd-divers': '📦',
+  'r-dons': '💝', 'r-cotisations': '👥', 'r-subventions': '🏛️', 'r-autres': '💶',
+};
+const ICONES_CHOIX = [
+  ['', 'Aucune'], ['🔧', 'Clé'], ['🔩', 'Vis'], ['🪛', 'Tournevis'], ['🔌', 'Prise électrique'], ['💡', 'Ampoule'], ['🔋', 'Pile'],
+  ['🧵', 'Fil à coudre'], ['🚲', 'Vélo'], ['💻', 'Ordinateur'], ['📱', 'Téléphone'], ['☕', 'Café'], ['🍰', 'Gâteau'],
+  ['📣', 'Mégaphone'], ['🖨️', 'Imprimante'], ['🛡️', 'Bouclier'], ['📦', 'Carton'], ['✉️', 'Enveloppe'], ['🚗', 'Voiture'],
+  ['🏠', 'Maison'], ['💝', 'Cadeau'], ['👥', 'Personnes'], ['🏛️', 'Institution'], ['💶', 'Billet'], ['🎟️', 'Ticket'], ['⭐', 'Étoile'],
+];
+
+/** Icône d'une catégorie : celle choisie, sinon celle d'origine, sinon aucune. */
+function iconeCategorie(c) {
+  return c ? (c.icone ?? ICONES_DEFAUT[c.id] ?? '') : '';
+}
+
+/** "2026-11" -> "novembre 2026" */
+function moisFR(cle) {
+  const [a, m] = cle.split('-').map(Number);
+  return new Date(a, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+}
+
+/** Solde d'une liste d'écritures (recettes moins dépenses, annulées exclues). */
+function solde(ecritures) {
+  return ecritures.reduce((s, e) => s + (e.annulee ? 0 : (e.sens === 'recette' ? e.montant : -e.montant)), 0);
+}
 
 /* =====================================================================
  * 1. FONCTIONS PURES
@@ -318,7 +347,8 @@ if (typeof module !== 'undefined') {
     lireMontant, montantSaisie, euros, dateISO, dateValide, dateFR, bornesPeriode, dansPeriode,
     exerciceCourant, trier, principales, sousCategories, utilisations, migrerCategories, calculerEtat,
     resteARepartir, construireTicket, celluleCSV, versCSV, versSauvegarde, fusionner,
-    corriger, basculerAnnulation, CATEGORIES_DEFAUT, SOUS_CATEGORIES_DEFAUT, MODES, SCHEMA,
+    corriger, basculerAnnulation, iconeCategorie, moisFR, solde,
+    CATEGORIES_DEFAUT, SOUS_CATEGORIES_DEFAUT, ICONES_DEFAUT, ICONES_CHOIX, MODES, SCHEMA,
   };
 }
 
@@ -392,14 +422,25 @@ if (typeof document !== 'undefined') {
   const totalTicket = (ticket) => lignesDuTicket(ticket).reduce((s, e) => s + (e.annulee ? 0 : e.montant), 0);
 
   let minuterieAnnonce;
-  function annoncer(message) {
+  /** Message de confirmation, lu par les lecteurs d'écran. `action` ajoute un bouton, par exemple « Corriger ». */
+  function annoncer(message, action = null) {
     const zone = $('#annonce');
+    const bouton = $('#annonce-action');
     zone.textContent = '';
     clearTimeout(minuterieAnnonce);
+    $('#bandeau').hidden = false;
+    bouton.hidden = !action;
+    if (action) {
+      bouton.textContent = action.libelle;
+      bouton.onclick = () => { $('#bandeau').hidden = true; action.faire(); };
+    }
     // Léger délai : laisse le lecteur d'écran détecter le changement de contenu.
     setTimeout(() => { zone.textContent = message; }, 50);
-    minuterieAnnonce = setTimeout(() => { zone.textContent = ''; }, 6000);
+    // Avec un bouton, on laisse plus de temps pour le lire et l'atteindre.
+    minuterieAnnonce = setTimeout(() => { zone.textContent = ''; $('#bandeau').hidden = true; }, action ? 10000 : 6000);
   }
+
+  const marqueIcone = (c) => { const i = iconeCategorie(c); return i && h('span', { class: 'icone', 'aria-hidden': 'true' }, i); };
 
   function erreur(idChamp, idErreur, message) {
     const p = $(idErreur);
@@ -497,6 +538,8 @@ if (typeof document !== 'undefined') {
     ].filter(Boolean).join(', ');
     return h('li', { class: e.annulee ? 'annulee' : '' },
       h('button', { type: 'button', 'aria-label': lecture, onclick: () => ouvrirEdition(e.id) },
+        h('span', { class: `pastille-icone ${e.sens}`, 'aria-hidden': 'true' },
+          iconeCategorie(categorie(e.categorie)) || nomCategorie(e.categorie).charAt(0).toUpperCase()),
         h('span', { class: 'ligne1' }, nomComplet(e), e.annulee && h('span', { class: 'etiquette' }, 'Annulée')),
         h('span', { class: `somme ${e.sens}` }, `${signe} ${euros(e.montant)}`),
         h('span', { class: 'ligne2' }, details)));
@@ -524,15 +567,33 @@ if (typeof document !== 'undefined') {
     const sens = sensSaisie();
     const actives = principales(etat.categories, sens).filter((c) => !c.archivee);
     $('#choix-categorie').replaceChildren(...actives.map((c) => h('label', {},
-      h('input', { type: 'radio', name: 'categorie', value: c.id }), h('span', {}, c.nom))));
+      h('input', { type: 'radio', name: 'categorie', value: c.id }), h('span', {}, marqueIcone(c), c.nom))));
     $('#mode').value = modeParDefaut(sens);
     $('#btn-ticket').hidden = sens !== 'depense';
+    $('#btn-enregistrer').textContent = sens === 'recette' ? 'Enregistrer la recette' : 'Enregistrer la dépense';
     erreur(null, '#err-categorie');
     rendreChoixSous();
   }
 
+  /** Période de la synthèse d'accueil : l'exercice en cours s'il est défini, sinon l'année civile. */
+  function periodeSynthese() {
+    const ex = exerciceCourant(etat.exercices, dateISO());
+    return ex ? { choix: `exercice:${ex.id}`, nom: ex.nom, debut: ex.debut, fin: ex.fin || '' }
+      : { choix: 'annee', nom: `Année ${dateISO().slice(0, 4)}`, ...bornesPeriode('annee', dateISO(), []) };
+  }
+
+  function rendreSynthese() {
+    const p = periodeSynthese();
+    const r = calculerEtat(etat.ecritures, p.debut, p.fin);
+    $('#synthese-periode').textContent = `Résultat — ${p.nom}`;
+    $('#synthese-resultat').textContent = (r.resultat > 0 ? '+ ' : '') + euros(r.resultat);
+    $('#synthese-recettes').textContent = `Recettes ${euros(r.recettes)}`;
+    $('#synthese-depenses').textContent = `Dépenses ${euros(r.depenses)}`;
+  }
+
   function rendreSaisie() {
-    remplirListe($('#liste-dernieres'), trier(etat.ecritures).slice(0, 5), 'Aucune écriture pour le moment.');
+    rendreSynthese();
+    remplirListe($('#liste-dernieres'), trier(etat.ecritures).slice(0, 5), 'Aucune écriture pour le moment. La première apparaîtra ici.');
     rendreAlerteSauvegarde();
   }
 
@@ -580,7 +641,8 @@ if (typeof document !== 'undefined') {
     choisie.checked = false;
     rendreChoixSous();
     rendreSaisie();
-    annoncer(`${sens === 'recette' ? 'Recette' : 'Dépense'} de ${euros(montant)} enregistrée (${nomComplet(e)}).`);
+    annoncer(`${sens === 'recette' ? 'Recette' : 'Dépense'} de ${euros(montant)} enregistrée (${nomComplet(e)}).`,
+      { libelle: 'Corriger', faire: () => ouvrirEdition(e.id) });
     $('#montant').focus();
   }
 
@@ -614,7 +676,7 @@ if (typeof document !== 'undefined') {
   function ajouterLigneTicket(montantInitial = '') {
     rangLigne += 1;
     const n = rangLigne;
-    const montant = h('input', { id: `tk-m-${n}`, class: 'montant tk-montant', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0,00', value: montantInitial });
+    const montant = h('input', { id: `tk-m-${n}`, class: 'tk-montant', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0,00', value: montantInitial });
     const cat = h('select', { id: `tk-c-${n}`, class: 'tk-cat' }, h('option', { value: '' }, 'Choisir…'),
       ...principales(etat.categories, 'depense').filter((c) => !c.archivee).map((c) => h('option', { value: c.id }, c.nom)));
     const sous = h('select', { id: `tk-s-${n}`, class: 'tk-sous' });
@@ -625,7 +687,8 @@ if (typeof document !== 'undefined') {
     montant.addEventListener('input', () => { montant.removeAttribute('aria-invalid'); majResteTicket(); });
     const fs = h('fieldset', { class: 'ligne-ticket' },
       h('legend', {}),
-      h('div', { class: 'champ' }, h('label', { for: montant.id }, 'Montant'), montant),
+      h('div', { class: 'champ' }, h('label', { for: montant.id }, 'Montant en euros'),
+        h('div', { class: 'champ-montant' }, montant, h('span', { 'aria-hidden': 'true' }, '€'))),
       h('div', { class: 'champ' }, h('label', { for: cat.id }, 'Catégorie'), cat),
       blocSous,
       h('div', { class: 'champ' }, h('label', { for: libelle.id }, 'Libellé ', h('span', { class: 'facultatif' }, '(facultatif)')), libelle),
@@ -728,10 +791,20 @@ if (typeof document !== 'undefined') {
     const liste = trier(etat.ecritures).filter((e) => dansPeriode(e.date, debut, fin)
       && (!sens || e.sens === sens)
       && (!idFiltre || (niveau === 'c' ? e.categorie === idFiltre : e.sousCategorie === idFiltre)));
-    remplirListe($('#liste-ecritures'), liste, 'Aucune écriture pour ces critères.');
-    const total = liste.reduce((s, e) => s + (e.annulee ? 0 : (e.sens === 'recette' ? e.montant : -e.montant)), 0);
+    // Regroupement par mois, avec le solde du mois en regard : la liste se lit comme un relevé.
+    const parMois = new Map();
+    for (const e of liste) {
+      const cle = e.date.slice(0, 7);
+      if (!parMois.has(cle)) parMois.set(cle, []);
+      parMois.get(cle).push(e);
+    }
+    $('#liste-ecritures').replaceChildren(...(liste.length ? [...parMois].flatMap(([cle, groupe]) => [
+      h('li', { class: 'mois' }, h('span', {}, moisFR(cle)), h('span', {}, `solde ${euros(solde(groupe))}`)),
+      ...groupe.map(ligneEcriture),
+    ]) : [h('li', { class: 'vide' }, 'Aucune écriture pour ces critères.')]));
+    const total = solde(liste);
     $('#resume-ecritures').textContent = `${pluriel(liste.length, 'écriture')} — ${periodeEcritures.texte().toLowerCase()}`
-      + (liste.length ? ` — solde : ${euros(total)}` : '');
+      + (liste.length ? ` — solde\u00a0: ${euros(total)}` : '');
   }
 
   /* ---------- Vue État ---------- */
@@ -742,7 +815,7 @@ if (typeof document !== 'undefined') {
     const connues = principales(etat.categories, sens).filter((c) => sommes[c.id]).sort((x, y) => sommes[y.id] - sommes[x.id]);
     // Catégories référencées par des écritures mais absentes de la liste (cas d'un import partiel).
     const inconnues = Object.keys(sommes).filter((id) => !categorie(id) || categorie(id).parent);
-    const blocs = [...connues.map((c) => [c.id, c.nom]), ...inconnues.map((id) => [id, 'Catégorie inconnue'])];
+    const blocs = [...connues.map((c) => [c.id, [marqueIcone(c), ` ${c.nom}`]]), ...inconnues.map((id) => [id, 'Catégorie inconnue'])];
     if (!blocs.length) return h('p', { class: 'vide' }, `${titre} : aucune écriture sur la période.`);
 
     const lignes = blocs.flatMap(([id, nom]) => {
@@ -780,7 +853,7 @@ if (typeof document !== 'undefined') {
         h('div', { class: 'total resultat' }, h('span', {}, `Résultat (${signeResultat})`), h('strong', {}, euros(r.resultat)))),
       tableauCategories('Recettes par catégorie', 'recette', r),
       tableauCategories('Dépenses par catégorie', 'depense', r),
-      modesUtilises.length ? h('table', {},
+      modesUtilises.length ? h('table', { class: 'modes' },
         h('caption', {}, 'Par mode de paiement'),
         h('thead', {}, h('tr', {},
           h('th', { scope: 'col' }, 'Mode'), h('th', { scope: 'col', class: 'nombre' }, 'Recettes'), h('th', { scope: 'col', class: 'nombre' }, 'Dépenses'))),
@@ -1110,9 +1183,19 @@ if (typeof document !== 'undefined') {
       document.getElementById(`sous-nom-${c.id}`)?.focus();
     };
     const panneau = h('details', { class: 'details cat', open: categoriesOuvertes.has(c.id) },
-      h('summary', {}, h('span', {}, c.nom), c.archivee && h('span', { class: 'etiquette' }, 'Archivée'),
+      h('summary', {}, marqueIcone(c), h('span', {}, c.nom), c.archivee && h('span', { class: 'etiquette' }, 'Archivée'),
         h('span', { class: 'facultatif' }, sous.length ? `— ${pluriel(sous.length, 'sous-catégorie')}` : '— sans sous-catégorie')),
       h('ul', { class: 'liste-simple' }, h('li', {}, commandesCategorie(c))),
+      h('div', { class: 'champ icone-choix' }, h('label', { for: `icone-${c.id}` }, 'Icône'),
+        h('select', {
+          id: `icone-${c.id}`,
+          onchange: async (ev) => {
+            c.icone = ev.target.value;
+            c.modifie = new Date().toISOString();
+            await enregistrerCategories();
+            annoncer(c.icone ? `Icône de « ${c.nom} » changée.` : `Icône de « ${c.nom} » retirée.`);
+          },
+        }, ICONES_CHOIX.map(([valeur, nom]) => h('option', { value: valeur, selected: valeur === iconeCategorie(c) }, valeur ? `${valeur}  ${nom}` : nom)))),
       h('h4', {}, 'Sous-catégories'),
       h('ul', { class: 'liste-simple' }, sous.length ? sous.map((s) => h('li', {}, commandesCategorie(s)))
         : h('li', { class: 'vide' }, 'Aucune : la saisie ne demande que la catégorie.')),
@@ -1169,6 +1252,7 @@ if (typeof document !== 'undefined') {
     for (const bouton of document.querySelectorAll('.onglets button')) {
       if (bouton.dataset.vue === vue) bouton.setAttribute('aria-current', 'page'); else bouton.removeAttribute('aria-current');
     }
+    document.body.dataset.vue = vue;
     $('#titre-vue').textContent = TITRES[vue];
     document.title = `${TITRES[vue]} — Trésorerie Repair Café`;
     rendreVue();
@@ -1214,6 +1298,7 @@ if (typeof document !== 'undefined') {
     $('#choix-categorie').addEventListener('change', () => { erreur(null, '#err-categorie'); rendreChoixSous(); });
     $('#choix-sous-categorie').addEventListener('change', () => erreur(null, '#err-sous-categorie'));
 
+    $('#synthese').addEventListener('click', () => { periodeEtat.choisir(periodeSynthese().choix); allerA('etat'); });
     $('#btn-ticket').addEventListener('click', ouvrirTicket);
     $('#form-ticket').addEventListener('submit', enregistrerTicket);
     $('#tk-total').addEventListener('input', majResteTicket);
