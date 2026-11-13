@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trésorerie Repair Café</title>
+<meta name="description" content="Suivi de trésorerie du Carembault Repair Café">
+<meta name="theme-color" content="#1f5f4a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Trésorerie">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="evitement" href="#contenu">Aller au contenu</a>
+
+<header class="entete">
+  <h1 id="titre-vue" tabindex="-1">Saisie</h1>
+</header>
+
+<main id="contenu">
+
+  <!-- ===== SAISIE ===== -->
+  <section id="vue-saisie" class="vue" aria-labelledby="titre-vue">
+    <div id="alerte-sauvegarde" class="alerte" hidden>
+      <p id="texte-alerte-sauvegarde"></p>
+      <button type="button" id="btn-sauver-alerte" class="bouton">Sauvegarder maintenant</button>
+    </div>
+
+    <form id="form-saisie" novalidate>
+      <fieldset class="segment">
+        <legend>Type d'écriture</legend>
+        <label><input type="radio" name="sens" value="depense" checked><span>Dépense</span></label>
+        <label><input type="radio" name="sens" value="recette"><span>Recette</span></label>
+      </fieldset>
+
+      <div class="champ">
+        <label for="montant">Montant en euros</label>
+        <input id="montant" class="montant" type="text" inputmode="decimal" autocomplete="off"
+               placeholder="0,00" aria-describedby="err-montant" required>
+        <p id="err-montant" class="erreur" hidden></p>
+      </div>
+
+      <fieldset>
+        <legend>Catégorie</legend>
+        <div id="choix-categorie" class="pastilles"></div>
+        <p id="err-categorie" class="erreur" hidden></p>
+      </fieldset>
+
+      <fieldset id="bloc-sous-categorie" hidden>
+        <legend>Sous-catégorie</legend>
+        <div id="choix-sous-categorie" class="pastilles"></div>
+        <p id="err-sous-categorie" class="erreur" hidden></p>
+      </fieldset>
+
+      <details class="details">
+        <summary>Détails : date, libellé, mode de paiement</summary>
+        <div class="champ">
+          <label for="date">Date</label>
+          <input id="date" type="date" required>
+        </div>
+        <div class="champ">
+          <label for="libelle">Libellé <span class="facultatif">(facultatif)</span></label>
+          <input id="libelle" type="text" maxlength="120" autocomplete="off" aria-describedby="aide-libelle">
+          <p id="aide-libelle" class="aide">Ne pas écrire le nom d'un donateur.</p>
+        </div>
+        <div class="champ">
+          <label for="mode">Mode de paiement</label>
+          <select id="mode"></select>
+        </div>
+        <div class="champ">
+          <label for="piece">N° de pièce <span class="facultatif">(facultatif)</span></label>
+          <input id="piece" type="text" maxlength="30" autocomplete="off" aria-describedby="aide-piece">
+          <p id="aide-piece" class="aide">Pour retrouver le justificatif dans la pochette.</p>
+        </div>
+      </details>
+
+      <button type="submit" class="bouton primaire large">Enregistrer</button>
+      <button type="button" id="btn-ticket" class="bouton large espace-haut">Ticket à plusieurs achats</button>
+    </form>
+
+    <section aria-labelledby="h-dernieres" class="bloc">
+      <h2 id="h-dernieres">Dernières écritures</h2>
+      <ul id="liste-dernieres" class="ecritures"></ul>
+    </section>
+  </section>
+
+  <!-- ===== ÉCRITURES ===== -->
+  <section id="vue-ecritures" class="vue" aria-labelledby="titre-vue" hidden>
+    <div id="periode-ecritures"></div>
+    <div class="ligne-champs">
+      <div class="champ">
+        <label for="filtre-sens">Type</label>
+        <select id="filtre-sens">
+          <option value="">Tout</option>
+          <option value="depense">Dépenses</option>
+          <option value="recette">Recettes</option>
+        </select>
+      </div>
+      <div class="champ">
+        <label for="filtre-categorie">Catégorie</label>
+        <select id="filtre-categorie"></select>
+      </div>
+    </div>
+    <p id="resume-ecritures" class="resume" aria-live="polite"></p>
+    <ul id="liste-ecritures" class="ecritures"></ul>
+  </section>
+
+  <!-- ===== ÉTAT ===== -->
+  <section id="vue-etat" class="vue" aria-labelledby="titre-vue" hidden>
+    <div id="periode-etat" class="non-imprime"></div>
+    <div id="rapport-etat" aria-live="polite"></div>
+    <div class="actions non-imprime">
+      <button type="button" id="btn-imprimer" class="bouton">Imprimer ou PDF</button>
+      <button type="button" id="btn-csv-periode" class="bouton">Exporter la période (CSV)</button>
+    </div>
+  </section>
+
+  <!-- ===== RÉGLAGES ===== -->
+  <section id="vue-reglages" class="vue" aria-labelledby="titre-vue" hidden>
+
+    <section class="bloc" aria-labelledby="h-sauvegarde">
+      <h2 id="h-sauvegarde">Sauvegarde</h2>
+      <p id="etat-sauvegarde"></p>
+      <p id="etat-persistance" class="aide"></p>
+      <div class="actions">
+        <button type="button" id="btn-sauver" class="bouton primaire">Sauvegarder (JSON)</button>
+        <button type="button" id="btn-csv-tout" class="bouton">Tout exporter (CSV)</button>
+        <label class="bouton" for="fichier-import">Restaurer une sauvegarde</label>
+        <input id="fichier-import" type="file" accept="application/json,.json" class="masque-visuel">
+      </div>
+    </section>
+
+    <section class="bloc" aria-labelledby="h-exercices">
+      <h2 id="h-exercices">Exercices</h2>
+      <p class="aide">Un exercice va d'une assemblée générale à la suivante. Laissez la date de fin vide pour l'exercice en cours.</p>
+      <ul id="liste-exercices" class="liste-simple"></ul>
+      <form id="form-exercice" novalidate>
+        <div class="champ">
+          <label for="ex-nom">Nom de l'exercice</label>
+          <input id="ex-nom" type="text" maxlength="40" placeholder="Exercice 2026-2027" required>
+        </div>
+        <div class="ligne-champs">
+          <div class="champ">
+            <label for="ex-debut">Début</label>
+            <input id="ex-debut" type="date" required>
+          </div>
+          <div class="champ">
+            <label for="ex-fin">Fin <span class="facultatif">(facultatif)</span></label>
+            <input id="ex-fin" type="date">
+          </div>
+        </div>
+        <p id="err-exercice" class="erreur" hidden></p>
+        <button type="submit" class="bouton">Ajouter l'exercice</button>
+      </form>
+    </section>
+
+    <section class="bloc" aria-labelledby="h-categories">
+      <h2 id="h-categories">Catégories</h2>
+      <p class="aide">Touchez une catégorie pour la renommer et gérer ses sous-catégories. Dès qu'une catégorie a des sous-catégories, il faut en choisir une à chaque saisie.</p>
+      <p class="aide">Une catégorie déjà utilisée par des écritures ne peut pas être supprimée, seulement archivée : elle disparaît de la saisie mais reste dans les écritures passées.</p>
+      <h3>Dépenses</h3>
+      <div id="liste-cat-depense"></div>
+      <h3>Recettes</h3>
+      <div id="liste-cat-recette"></div>
+      <form id="form-categorie" novalidate>
+        <div class="ligne-champs">
+          <div class="champ">
+            <label for="cat-nom">Nouvelle catégorie</label>
+            <input id="cat-nom" type="text" maxlength="30" required>
+          </div>
+          <div class="champ">
+            <label for="cat-sens">Type</label>
+            <select id="cat-sens">
+              <option value="depense">Dépense</option>
+              <option value="recette">Recette</option>
+            </select>
+          </div>
+        </div>
+        <p id="err-cat-nom" class="erreur" hidden></p>
+        <button type="submit" class="bouton">Ajouter la catégorie</button>
+      </form>
+    </section>
+
+    <p class="aide version">Trésorerie Repair Café — version <span id="version"></span> (données sur cet appareil)</p>
+  </section>
+</main>
+
+<nav class="onglets" aria-label="Navigation principale">
+  <button type="button" data-vue="saisie" aria-current="page"><span aria-hidden="true">＋</span>Saisie</button>
+  <button type="button" data-vue="ecritures"><span aria-hidden="true">☰</span>Écritures</button>
+  <button type="button" data-vue="etat"><span aria-hidden="true">Σ</span>État</button>
+  <button type="button" data-vue="reglages"><span aria-hidden="true">⚙</span>Réglages</button>
+</nav>
+
+<div id="annonce" class="annonce" role="status" aria-live="polite"></div>
+
+<!-- ===== Fenêtre de correction ===== -->
+<dialog id="dlg-ecriture" aria-labelledby="dlg-titre">
+  <form id="form-edition" method="dialog" novalidate>
+    <h2 id="dlg-titre">Corriger l'écriture</h2>
+    <p id="dlg-statut" class="aide"></p>
+    <div id="dlg-ticket" class="alerte" hidden>
+      <p id="dlg-ticket-texte"></p>
+      <ul id="dlg-ticket-liste"></ul>
+    </div>
+    <fieldset class="segment">
+      <legend>Type d'écriture</legend>
+      <label><input type="radio" name="e-sens" value="depense"><span>Dépense</span></label>
+      <label><input type="radio" name="e-sens" value="recette"><span>Recette</span></label>
+    </fieldset>
+    <div class="champ">
+      <label for="e-montant">Montant en euros</label>
+      <input id="e-montant" class="montant" type="text" inputmode="decimal" autocomplete="off" aria-describedby="e-err-montant" required>
+      <p id="e-err-montant" class="erreur" hidden></p>
+    </div>
+    <div class="champ">
+      <label for="e-categorie">Catégorie</label>
+      <select id="e-categorie"></select>
+    </div>
+    <div class="champ" id="e-bloc-sous">
+      <label for="e-sous">Sous-catégorie</label>
+      <select id="e-sous" aria-describedby="e-err-sous"></select>
+      <p id="e-err-sous" class="erreur" hidden></p>
+    </div>
+    <div class="champ">
+      <label for="e-date">Date</label>
+      <input id="e-date" type="date" required>
+    </div>
+    <div class="champ">
+      <label for="e-libelle">Libellé <span class="facultatif">(facultatif)</span></label>
+      <input id="e-libelle" type="text" maxlength="120" autocomplete="off">
+    </div>
+    <div class="champ">
+      <label for="e-mode">Mode de paiement</label>
+      <select id="e-mode"></select>
+    </div>
+    <div class="champ">
+      <label for="e-piece">N° de pièce <span class="facultatif">(facultatif)</span></label>
+      <input id="e-piece" type="text" maxlength="30" autocomplete="off">
+    </div>
+    <details id="dlg-historique" class="details" hidden>
+      <summary>Historique des modifications</summary>
+      <ul id="dlg-liste-historique" class="liste-simple"></ul>
+    </details>
+    <div class="actions">
+      <button type="submit" id="btn-edit-valider" class="bouton primaire">Enregistrer la correction</button>
+      <button type="button" id="btn-edit-annuler-ecriture" class="bouton danger">Annuler cette écriture</button>
+      <button type="button" id="btn-edit-fermer" class="bouton">Fermer</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===== Ticket à plusieurs achats ===== -->
+<dialog id="dlg-ticket-saisie" aria-labelledby="tk-titre">
+  <form id="form-ticket" novalidate>
+    <h2 id="tk-titre">Ticket à plusieurs achats</h2>
+    <p class="aide">Saisissez le total du ticket, puis un achat par type de dépense. Chaque achat devient une écriture.</p>
+    <div class="champ">
+      <label for="tk-total">Total du ticket en euros</label>
+      <input id="tk-total" class="montant" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-describedby="tk-err-total" required>
+      <p id="tk-err-total" class="erreur" hidden></p>
+    </div>
+    <div class="ligne-champs">
+      <div class="champ">
+        <label for="tk-date">Date</label>
+        <input id="tk-date" type="date" required>
+      </div>
+      <div class="champ">
+        <label for="tk-mode">Mode de paiement</label>
+        <select id="tk-mode"></select>
+      </div>
+    </div>
+    <div class="champ">
+      <label for="tk-piece">N° de pièce <span class="facultatif">(facultatif)</span></label>
+      <input id="tk-piece" type="text" maxlength="30" autocomplete="off">
+    </div>
+    <div id="tk-lignes"></div>
+    <button type="button" id="tk-ajouter" class="bouton">Ajouter un achat</button>
+    <p id="tk-reste" class="resume" role="status"></p>
+    <p id="tk-err" class="erreur" hidden></p>
+    <div class="actions">
+      <button type="submit" class="bouton primaire">Enregistrer le ticket</button>
+      <button type="button" id="tk-fermer" class="bouton">Abandonner</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="app.js" defer></script>
+</body>
+</html>

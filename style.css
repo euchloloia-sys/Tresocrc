@@ -1,0 +1,296 @@
+/* Trésorerie Repair Café — styles
+   Principes : texte en rem (respecte le zoom du système), cibles tactiles >= 48 px,
+   contrastes AA au minimum, jamais d'information portée par la seule couleur. */
+
+:root {
+  --fond: #f6f5f1;
+  --surface: #ffffff;
+  --texte: #1b1f1d;
+  --texte-doux: #4a534f;
+  --bord: #8a938f;
+  --accent: #1f5f4a;
+  --sur-accent: #ffffff;
+  --accent-doux: #dcebe5;
+  --recette: #17603f;
+  --depense: #9c2f22;
+  --alerte-fond: #fff3cd;
+  --alerte-texte: #4d3b00;
+  --focus: #0b57d0;
+  --rayon: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #121615;
+    --surface: #1c2220;
+    --texte: #eef2f0;
+    --texte-doux: #b9c4bf;
+    --bord: #77827d;
+    --accent: #7fd1b3;
+    --sur-accent: #0c2019;
+    --accent-doux: #24382f;
+    --recette: #8fe0b4;
+    --depense: #ffb0a3;
+    --alerte-fond: #3d3210;
+    --alerte-texte: #ffe9a6;
+    --focus: #9ec2ff;
+  }
+}
+
+* { box-sizing: border-box; }
+
+/* Un élément masqué le reste, même s'il porte une classe qui fixe `display` (boutons, grilles). */
+[hidden] { display: none !important; }
+
+html { font-size: 100%; -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+  background: var(--fond);
+  color: var(--texte);
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+h1, h2, h3 { line-height: 1.25; margin: 0; }
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.2rem; margin-bottom: .5rem; }
+h3 { font-size: 1rem; margin: 1rem 0 .25rem; color: var(--texte-doux); }
+p { margin: .25rem 0 .75rem; }
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+h1:focus { outline: none; }
+
+.evitement {
+  position: absolute; left: -999px; top: 0;
+  background: var(--accent); color: var(--sur-accent);
+  padding: .75rem 1rem; z-index: 20;
+}
+.evitement:focus { left: 0; }
+
+.masque-visuel {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
+.entete {
+  background: var(--accent);
+  color: var(--sur-accent);
+  padding: calc(.75rem + env(safe-area-inset-top)) 1rem .75rem;
+  position: sticky; top: 0; z-index: 5;
+}
+
+main { max-width: 40rem; margin: 0 auto; padding: 1rem; }
+
+/* ---- Formulaires ---- */
+fieldset { border: 0; padding: 0; margin: 0 0 1rem; min-width: 0; }
+legend, label { font-weight: 600; display: block; margin-bottom: .25rem; padding: 0; }
+.facultatif { font-weight: 400; color: var(--texte-doux); }
+.champ { margin-bottom: 1rem; min-width: 0; }
+.ligne-champs { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+
+input[type="text"], input[type="date"], select {
+  width: 100%;
+  min-height: 3rem;
+  font: inherit;
+  color: var(--texte);
+  background: var(--surface);
+  border: 2px solid var(--bord);
+  border-radius: var(--rayon);
+  padding: .5rem .75rem;
+}
+input.montant { font-size: 2rem; font-weight: 700; text-align: right; min-height: 4rem; }
+input[aria-invalid="true"] { border-color: var(--depense); border-width: 3px; }
+
+.aide { color: var(--texte-doux); font-size: .95rem; margin: .25rem 0 0; }
+.erreur { color: var(--depense); font-weight: 600; margin: .25rem 0 0; }
+.erreur::before { content: "⚠ "; }
+
+/* Sélecteur Dépense / Recette */
+.segment { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.segment legend { grid-column: 1 / -1; }
+.segment label { margin: 0; position: relative; }
+.segment input, .pastilles input {
+  position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer;
+}
+.segment span, .pastilles span {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 3rem; padding: .5rem .75rem; text-align: center;
+  border: 2px solid var(--bord); border-radius: var(--rayon);
+  background: var(--surface); font-weight: 600;
+}
+.segment input:checked + span, .pastilles input:checked + span {
+  background: var(--accent); color: var(--sur-accent); border-color: var(--accent);
+}
+.segment input:checked + span::before, .pastilles input:checked + span::before { content: "✓ "; }
+.segment input:focus-visible + span, .pastilles input:focus-visible + span {
+  outline: 3px solid var(--focus); outline-offset: 2px;
+}
+
+.pastilles { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.pastilles label { margin: 0; position: relative; }
+
+.details {
+  border: 2px solid var(--bord); border-radius: var(--rayon);
+  padding: 0 .75rem; margin-bottom: 1rem; background: var(--surface);
+}
+.details summary { min-height: 3rem; display: flex; align-items: center; font-weight: 600; cursor: pointer; }
+.details[open] summary { margin-bottom: .5rem; }
+
+/* ---- Boutons ---- */
+.bouton {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 3rem; padding: .5rem 1rem;
+  font: inherit; font-weight: 600; text-align: center;
+  color: var(--texte); background: var(--surface);
+  border: 2px solid var(--bord); border-radius: var(--rayon);
+  cursor: pointer; margin: 0;
+}
+.bouton.primaire { background: var(--accent); color: var(--sur-accent); border-color: var(--accent); }
+.bouton.danger { color: var(--depense); border-color: var(--depense); }
+.bouton.large { width: 100%; min-height: 3.5rem; font-size: 1.15rem; }
+.bouton.petit { min-height: 3rem; padding: .25rem .75rem; }
+/* Le champ fichier est masqué : on reporte l'anneau de focus sur son étiquette-bouton. */
+label.bouton:has(+ input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+.actions .bouton { flex: 1 1 10rem; }
+
+/* ---- Blocs et listes ---- */
+.bloc {
+  background: var(--surface); border-radius: var(--rayon);
+  padding: 1rem; margin-top: 1.25rem; border: 1px solid var(--bord);
+}
+.alerte {
+  background: var(--alerte-fond); color: var(--alerte-texte);
+  border: 2px solid currentColor; border-radius: var(--rayon);
+  padding: .75rem 1rem; margin-bottom: 1rem;
+}
+
+ul.ecritures, ul.liste-simple { list-style: none; margin: 0; padding: 0; }
+
+.ecritures li + li { border-top: 1px solid var(--bord); }
+.ecritures button {
+  width: 100%; min-height: 3.5rem; padding: .5rem .25rem;
+  display: grid; grid-template-columns: 1fr auto; gap: 0 .75rem;
+  font: inherit; color: inherit; text-align: left;
+  background: none; border: 0; cursor: pointer;
+}
+.ecritures .ligne1 { font-weight: 600; overflow-wrap: anywhere; }
+.ecritures .ligne2 { grid-column: 1; color: var(--texte-doux); font-size: .95rem; overflow-wrap: anywhere; }
+.ecritures .somme { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.somme.recette { color: var(--recette); }
+.somme.depense { color: var(--depense); }
+.ecritures .annulee .ligne1, .ecritures .annulee .somme { text-decoration: line-through; }
+.etiquette {
+  display: inline-block; font-size: .85rem; font-weight: 700;
+  border: 2px solid currentColor; border-radius: 6px; padding: 0 .35rem; margin-left: .35rem;
+}
+.vide { color: var(--texte-doux); padding: .75rem 0; }
+.resume { font-weight: 600; margin: .5rem 0; }
+
+.liste-simple li {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
+  padding: .5rem 0; border-top: 1px solid var(--bord);
+}
+.liste-simple li:first-child { border-top: 0; }
+.liste-simple .grandit { flex: 1 1 10rem; min-width: 0; }
+.liste-simple input[type="text"] { min-height: 3rem; }
+
+/* ---- État par période ---- */
+.totaux { display: grid; gap: .5rem; margin: 1rem 0; }
+.total {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+  background: var(--surface); border: 1px solid var(--bord);
+  border-radius: var(--rayon); padding: .75rem 1rem;
+}
+.total strong { font-size: 1.3rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.total.resultat { border-width: 3px; }
+
+table { width: 100%; border-collapse: collapse; margin: .25rem 0 1rem; }
+caption { text-align: left; font-weight: 700; font-size: 1.1rem; padding: .5rem 0; }
+th, td { padding: .5rem .25rem; border-bottom: 1px solid var(--bord); text-align: left; vertical-align: top; }
+td.nombre, th.nombre { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+tfoot td, tfoot th { font-weight: 700; border-bottom: 0; }
+.barre { height: .5rem; background: var(--accent-doux); border-radius: 4px; margin-top: .25rem; }
+.barre > span { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+
+/* ---- Navigation basse ---- */
+.onglets {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  background: var(--surface); border-top: 2px solid var(--bord);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.onglets button {
+  min-height: 4rem; font: inherit; font-size: .9rem; font-weight: 600;
+  color: var(--texte-doux); background: none; border: 0;
+  border-top: 4px solid transparent;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; padding: .25rem;
+}
+.onglets button span { font-size: 1.3rem; line-height: 1.2; }
+.onglets button[aria-current="page"] { color: var(--accent); border-top-color: var(--accent); }
+.onglets button:focus-visible { outline-offset: -4px; }
+
+/* ---- Message de confirmation ---- */
+.annonce {
+  position: fixed; left: 1rem; right: 1rem;
+  bottom: calc(5rem + env(safe-area-inset-bottom)); z-index: 15;
+  background: var(--texte); color: var(--fond);
+  border-radius: var(--rayon); padding: .75rem 1rem;
+  font-weight: 600; text-align: center;
+}
+.annonce:empty { display: none; }
+
+/* ---- Fenêtre de correction ---- */
+dialog {
+  width: min(100% - 1.5rem, 36rem); max-height: calc(100dvh - 2rem);
+  border: 2px solid var(--bord); border-radius: var(--rayon);
+  background: var(--fond); color: var(--texte); padding: 1rem;
+}
+dialog::backdrop { background: rgb(0 0 0 / .6); }
+
+.version { margin-top: 1.5rem; text-align: center; }
+.espace-haut { margin-top: .75rem; }
+
+/* ---- Sous-catégories ---- */
+th.sous { font-weight: 400; padding-left: 1.25rem; }
+th.sous::before { content: "› "; color: var(--texte-doux); }
+tr.sous td { color: var(--texte-doux); }
+.details.cat { margin-bottom: .5rem; padding-bottom: .25rem; }
+.details.cat summary { gap: .35rem; flex-wrap: wrap; }
+.details.cat h4 { font-size: 1rem; margin: .75rem 0 0; }
+.details.cat .ajout { display: flex; flex-wrap: wrap; gap: .5rem; align-items: end; margin: .5rem 0 .75rem; }
+.details.cat .ajout .champ { flex: 1 1 10rem; margin: 0; }
+
+/* ---- Ticket à plusieurs achats ---- */
+.ligne-ticket {
+  border: 2px solid var(--bord); border-radius: var(--rayon);
+  padding: .5rem .75rem .75rem; margin-bottom: .75rem; background: var(--surface);
+}
+.ligne-ticket legend { padding: 0 .35rem; }
+.ligne-ticket input.montant { font-size: 1.5rem; min-height: 3.25rem; }
+select[aria-invalid="true"] { border-color: var(--depense); border-width: 3px; }
+#dlg-ticket ul { margin: 0; padding-left: 1.25rem; }
+
+@media (max-width: 22rem) {
+  .ligne-champs, .pastilles { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bouton, .segment span, .pastilles span { transition: background-color .15s, color .15s; }
+}
+
+/* ---- Impression de l'état (ou « Enregistrer en PDF ») ---- */
+@media print {
+  :root { --fond: #fff; --surface: #fff; --texte: #000; --texte-doux: #333; --bord: #666; --accent: #000; --accent-doux: #ddd; --recette: #000; --depense: #000; }
+  body { padding: 0; }
+  .onglets, .annonce, .non-imprime, .evitement { display: none !important; }
+  .entete { position: static; background: none; color: #000; padding: 0 0 .5rem; }
+  main { max-width: none; padding: 0; }
+  .barre > span { background: #000; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
