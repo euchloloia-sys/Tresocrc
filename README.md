@@ -8,10 +8,10 @@ Nouveautés de la 1.1 : sous-catégories, ticket à plusieurs achats, gestion co
 
 ## Mise en ligne (GitHub Pages)
 
-1. Créer un dépôt **public** sur GitHub (par exemple `tresorerie-repair-cafe`).
-2. Y déposer tous les fichiers de ce dossier, à la racine.
+1. Le dépôt est `euchloloia-sys/Tresocrc` (il doit être **public** pour GitHub Pages gratuit).
+2. Les fichiers de l'appli sont à la racine du dépôt, branche `main`.
 3. Dans le dépôt : *Settings → Pages → Build and deployment → Deploy from a branch*, branche `main`, dossier `/ (root)`.
-4. Après une minute, l'appli est à l'adresse `https://<identifiant>.github.io/tresorerie-repair-cafe/`.
+4. Après une minute, l'appli est à l'adresse `https://euchloloia-sys.github.io/Tresocrc/`.
 
 Ce dépôt ne contient que le code. Aucune donnée de trésorerie n'y est envoyée.
 
